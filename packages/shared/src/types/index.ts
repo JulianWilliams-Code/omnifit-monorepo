@@ -260,6 +260,166 @@ export type TransactionType = 'REWARD' | 'CLAIM' | 'TRANSFER' | 'STAKE' | 'UNSTA
 export type TransactionStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCELLED';
 export type AIMessageType = 'DAILY_MOTIVATION' | 'STREAK_ENCOURAGEMENT' | 'MILESTONE_CELEBRATION' | 'PARTNER_RECOMMENDATION';
 
+// AI Marketing & Community Types
+export interface SocialPostRequest {
+  platform: 'twitter' | 'telegram' | 'linkedin' | 'newsletter';
+  content: string;
+  scheduledFor?: Date;
+  isThread?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface SocialPostResult {
+  success: boolean;
+  postId?: string;
+  error?: string;
+  platform: string;
+}
+
+export interface AnalyticsEvent {
+  event: string;
+  properties: Record<string, any>;
+  userId?: string;
+  timestamp?: Date;
+}
+
+// Review Worker Types
+export interface AIReviewRequest {
+  eventId: string;
+  event: {
+    type: string;
+    category: string;
+    duration?: number;
+    intensity?: number;
+    description?: string;
+    notes?: string;
+  };
+  user: {
+    activityLevel: string;
+    history?: any[];
+  };
+  context: {
+    timestamp: Date;
+  };
+}
+
+export interface AIReviewResult {
+  confidence: number;
+  approved: boolean;
+  reasoning: string;
+  flagged_concerns: string[];
+}
+
+export enum EventStatus {
+  PENDING = 'PENDING',
+  AI_REVIEW = 'AI_REVIEW', 
+  APPROVED_AI = 'APPROVED_AI',
+  HUMAN_REVIEW = 'HUMAN_REVIEW',
+  APPROVED_PARTNER = 'APPROVED_PARTNER',
+  REJECTED_AI = 'REJECTED_AI',
+  REJECTED_PARTNER = 'REJECTED_PARTNER',
+  REVIEW_ERROR = 'REVIEW_ERROR'
+}
+
+// Reward Engine Types
+export interface RewardCalculationInput {
+  eventId: string;
+  userId: string;
+  eventType: string;
+  category: string;
+  duration?: number;
+  intensity?: number;
+  partnerApproved?: boolean;
+}
+
+export interface RewardCalculationResult {
+  baseReward: number;
+  streakMultiplier: number;
+  partnerBonus: number;
+  categoryMultiplier: number;
+  finalAmount: number;
+  cappedAmount: number;
+  reasoning: string[];
+}
+
+// Mint Request Types
+export interface MintRequest {
+  id: string;
+  userId: string;
+  tokenAmount: number;
+  recipientWallet: string;
+  description: string;
+  status: MintRequestStatus;
+  rewardIds: string[];
+  requestedAt: Date;
+  mintSignature?: string;
+  explorerUrl?: string;
+}
+
+export enum MintRequestStatus {
+  QUEUED = 'QUEUED',
+  ADMIN_REVIEW = 'ADMIN_REVIEW', 
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  MINTING = 'MINTING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED'
+}
+
+// Signature Verification Types
+export interface NonceChallenge {
+  nonce: string;
+  message: string;
+  expiresAt: Date;
+}
+
+export interface SignatureVerificationResult {
+  isValid: boolean;
+  publicKey?: string;
+  message?: string;
+  error?: string;
+}
+
+// Health Check Types
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: Date;
+  services: {
+    database: 'up' | 'down';
+    ai_service: 'up' | 'down';
+    blockchain: 'up' | 'down';
+    redis: 'up' | 'down';
+  };
+  version: string;
+}
+
+// Analytics Types
+export interface UserAnalytics {
+  userId: string;
+  dailyActiveUsers: number;
+  weeklyActiveUsers: number;
+  monthlyActiveUsers: number;
+  eventsCreated: number;
+  tokensEarned: number;
+  lastActivity: Date;
+}
+
+export interface PlatformAnalytics {
+  totalUsers: number;
+  activeUsers: {
+    daily: number;
+    weekly: number;  
+    monthly: number;
+  };
+  totalEvents: number;
+  totalRewards: number;
+  totalTokensMinted: number;
+  growth: {
+    userGrowthRate: number;
+    activityGrowthRate: number;
+  };
+}
+
 // Human Accountability System Types
 export type PartnershipStatus = 'REQUESTED' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'PAUSED' | 'ENDED';
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REQUIRES_CLARIFICATION';
@@ -271,7 +431,7 @@ export interface PartnershipRequest {
   userId: string;
   partnerId?: string;
   status: PartnershipStatus;
-  message?: string;
+  message?: string;ring;
   allowsEventReview: boolean;
   allowsPlanCreation: boolean;
   allowsGoalSetting: boolean;

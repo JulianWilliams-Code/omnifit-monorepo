@@ -11,6 +11,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { WalletModule } from './wallet/wallet.module';
 import { AiModule } from './ai/ai.module';
 import { PartnershipsModule } from './partnerships/partnerships.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { PartnershipsModule } from './partnerships/partnerships.module';
     WalletModule,
     AiModule,
     PartnershipsModule,
+    AnalyticsModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

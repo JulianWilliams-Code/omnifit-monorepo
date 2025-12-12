@@ -84,6 +84,75 @@ DELETE /api/wallet/disconnect
 - **WalletDisplay** - Header component showing connected wallet
 - **WalletSettings** - Full settings page with security info and history
 
+## 🤖 AI Marketing & Community Agent
+
+OmniFit includes an intelligent marketing and community engagement system that automatically creates and schedules content across multiple platforms:
+
+### Automated Social Media
+- **Twitter/X**: Daily motivation, weekly threads, community highlights
+- **Telegram**: Real-time updates, community discussions, achievement announcements
+- **LinkedIn**: Professional wellness content, partnership news, thought leadership
+- **Email Newsletter**: Weekly community digest with stats and featured achievements
+
+### AI-Powered Features
+- **Smart Scheduling**: Content posted at optimal times for engagement
+- **Community Analytics**: Real-time tracking of engagement and growth metrics
+- **Event Review Pipeline**: AI + human hybrid system for activity verification
+- **Partner Management**: Comprehensive accountability partner dashboard
+
+### Quick Setup
+
+```bash
+# Start the AI marketing service
+pnpm --filter apps/ai dev
+
+# Configure API keys (add to apps/ai/.env)
+OPENAI_API_KEY=your_openai_key
+TWITTER_BEARER_TOKEN=your_twitter_token
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+LINKEDIN_ACCESS_TOKEN=your_linkedin_token
+
+# Manually trigger content generation (for testing)
+curl -X POST http://localhost:3002/api/v1/social/trigger/daily-motivation
+```
+
+### New API Endpoints
+
+```typescript
+// Generate and post content
+POST /api/v1/social/generate-post
+{ "platform": "twitter", "content": "...", "isThread": false }
+
+// AI event review
+POST /api/v1/social/review-event
+{ "event": {...}, "user": {...}, "context": {...} }
+
+// Analytics tracking
+POST /api/analytics/event
+{ "event": "user_signup", "properties": {...} }
+
+// Health monitoring
+GET /health
+GET /health/metrics
+```
+
+## 🤝 Partnership & Accountability System
+
+Connect with accountability partners for mutual support in your faith and fitness journey:
+
+### Partnership Features
+- **Partner Matching**: AI-powered matching based on preferences and goals
+- **Request System**: Send partnership requests with personalized messages
+- **Review Dashboard**: Partners can review and approve your activities
+- **Progress Tracking**: Shared goals and milestone celebrations
+- **Communication Tools**: Built-in messaging and notification system
+
+### Partner Portal
+- **Inbox Management**: View and respond to partnership requests
+- **Activity Reviews**: Approve activities with confidence scoring
+- **Analytics Dashboard**: Track partner engagement and success metrics
+- **Notification System**: Email and Telegram alerts for new requests
+
 ## 🏗️ Monorepo Structure
 
 This TurboRepo monorepo contains all OmniFit platform components in a single, efficiently managed workspace.
