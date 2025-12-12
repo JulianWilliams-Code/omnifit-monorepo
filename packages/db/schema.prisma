@@ -105,6 +105,31 @@ enum RewardStatus {
   REJECTED
 }
 
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  RETRYING
+}
+
+enum MintRequestStatus {
+  QUEUED
+  ADMIN_REVIEW
+  APPROVED
+  REJECTED
+  MINTING
+  COMPLETED
+  FAILED
+}
+
+enum WalletVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
 enum StreakType {
   DAILY
   WEEKLY
@@ -142,6 +167,37 @@ enum AIMessageType {
   PARTNER_RECOMMENDATION
 }
 
+// Human Accountability System Enums
+enum PartnershipStatus {
+  REQUESTED
+  PENDING
+  ACCEPTED
+  REJECTED
+  PAUSED
+  ENDED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUIRES_CLARIFICATION
+}
+
+enum PlanType {
+  SPIRITUAL
+  WORKOUT
+  HYBRID
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
 // Main Models
 model User {
   id            String   @id @default(uuid())
@@ -152,6 +208,8 @@ model User {
   avatar        String?
   passwordHash  String
   walletAddress String?  @unique
+  walletConnectedAt DateTime?
+  walletLastVerified DateTime?
   role          UserRole @default(USER)
   isActive      Boolean  @default(true)
   emailVerified Boolean  @default(false)
@@ -169,6 +227,16 @@ model User {
   notifications Notification[]
   transactions  Transaction[]
   aiMessages    AIMessage[]
+  
+  // Human Accountability Relations
+  partnershipRequests     PartnershipRequest[] @relation("PartnershipRequestUser")
+  partnershipPartners     PartnershipRequest[] @relation("PartnershipRequestPartner")
+  plans                   Plan[]
+  eventApprovals          EventApproval[]
+  eventApprovalsAsPartner EventApproval[] @relation("EventApprovalPartner")
+  dailySummaries          DailySummary[]
+  partnerNotifications    PartnerNotification[]
+  walletVerifications     WalletVerification[]
   
   @@map("users")
 }
@@ -247,6 +315,7 @@ model Event {
   
   // Relations
   rewards     Reward[]
+  eventApproval EventApproval?
   
   @@map("events")
 }
@@ -448,4 +517,354 @@ model AuditLog {
   createdAt DateTime @default(now())
   
   @@map("audit_logs")
+}
+
+// Human Accountability System Models
+
+model PartnershipRequest {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation("PartnershipRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  partnerId String?
+  partner   User?             @relation("PartnershipRequestPartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  
+  status    PartnershipStatus @default(REQUESTED)
+  message   String?           // Optional message with request
+  
+  // Partnership settings
+  allowsEventReview Boolean @default(true)   // Can partner review/approve events
+  allowsPlanCreation Boolean @default(true)  // Can partner create plans for user
+  allowsGoalSetting Boolean @default(true)   // Can partner set/modify goals
+  
+  // Auto-matching fields (when no specific partner requested)
+  preferredGender     Gender?
+  preferredAgeRange   String?      // e.g., "25-35"
+  preferredExperience String?      // e.g., "beginner", "intermediate", "advanced"
+  preferredCategories EventCategory[] // Areas where they want accountability
+  
+  // Response from partner
+  partnerResponse String?
+  responseAt      DateTime?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  acceptedAt DateTime?
+  endedAt    DateTime?
+  
+  @@map("partnership_requests")
+}
+
+model Plan {
+  id          String     @id @default(uuid())
+  createdBy   String     // Partner who created the plan
+  creator     User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  
+  // Plan details
+  type        PlanType
+  title       String
+  description String?
+  status      PlanStatus @default(DRAFT)
+  
+  // Schedule and targets
+  startDate   DateTime
+  endDate     DateTime?
+  weeklyGoal  Int?       // Number of activities per week
+  
+  // Plan content (JSON structure for flexibility)
+  activities  Json       // Array of planned activities with schedules
+  goals       Json       // Specific measurable goals
+  milestones  Json       // Checkpoint milestones and rewards
+  
+  // Tracking
+  completedActivities Int @default(0)
+  totalActivities     Int @default(0)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("plans")
+}
+
+model EventApproval {
+  id       String        @id @default(uuid())
+  eventId  String        @unique
+  event    Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId String?
+  partner  User?         @relation("EventApprovalPartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  
+  status   ApprovalStatus @default(PENDING)
+  
+  // Approval details
+  partnerFeedback String?   // Partner's feedback on the activity
+  partnerRating   Int?      // 1-5 rating from partner
+  clarificationNeeded String? // What needs clarification
+  
+  // AI-generated summary for partner review
+  aiSummary String?
+  
+  // Reward multiplier if approved
+  approvalMultiplier Float? @default(1.5) // 50% bonus for partner-approved events
+  
+  // Timestamps
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime?
+  
+  @@map("event_approvals")
+}
+
+model DailySummary {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  date   DateTime @db.Date
+  
+  // AI-generated summary content
+  adherenceBullet     String  // How well they stuck to their plan
+  highlightsBullet    String  // Key achievements/notable moments
+  recommendationBullet String // Suggestion for improvement/next steps
+  
+  // Metrics
+  activitiesCompleted Int @default(0)
+  activitiesPlanned   Int @default(0)
+  totalDuration      Int @default(0) // minutes
+  avgMood            Float?
+  avgEnergy          Float?
+  
+  // Partner engagement
+  partnerNotified Boolean @default(false)
+  partnerViewed   Boolean @default(false)
+  partnerViewedAt DateTime?
+  
+  // Timestamps
+  generatedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, date])
+  @@map("daily_summaries")
+}
+
+model PartnerNotification {
+  id         String @id @default(uuid())
+  partnerId  String
+  partner    User   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  
+  type       String // "approval_needed", "daily_summary", "plan_milestone", etc.
+  title      String
+  message    String
+  data       Json?  // Additional structured data
+  
+  // Email/webhook delivery
+  emailSent    Boolean @default(false)
+  webhookSent  Boolean @default(false)
+  deliveredAt  DateTime?
+  
+  // User interaction
+  readAt       DateTime?
+  actionTaken  String? // What action the partner took
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@map("partner_notifications")
+}
+
+// Reward Engine Models
+
+model RewardRule {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String
+  isActive    Boolean @default(true)
+  priority    Int @default(0) // Higher priority rules are processed first
+  
+  // Rule conditions (JSON structure for flexibility)
+  conditions Json // { eventType?, category?, duration?, intensity?, streakCount?, etc. }
+  
+  // Reward calculation
+  baseAmount      Int   // Base token amount
+  multiplierRules Json? // Additional multiplier conditions
+  maxDailyAmount  Int?  // Daily cap for this rule
+  maxUserAmount   Int?  // Per-user total cap
+  
+  // Time constraints
+  validFrom DateTime?
+  validTo   DateTime?
+  
+  // Metadata
+  version   String @default("1.0")
+  createdBy String? // Admin who created the rule
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("reward_rules")
+}
+
+model RewardJob {
+  id       String @id @default(uuid())
+  jobId    String @unique // BullMQ job ID
+  status   JobStatus @default(PENDING)
+  
+  // Job data
+  userId   String
+  eventId  String?
+  type     RewardType
+  
+  // Processing results
+  tokensEarned    Int?
+  rulesApplied    Json? // Array of rules that were applied
+  errorMessage    String?
+  retryCount      Int @default(0)
+  maxRetries      Int @default(3)
+  
+  // Processing metadata
+  processedAt DateTime?
+  scheduledFor DateTime @default(now())
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("reward_jobs")
+}
+
+model MintRequest {
+  id              String @id @default(uuid())
+  userId          String
+  status          MintRequestStatus @default(QUEUED)
+  
+  // Mint details
+  tokenAmount     Int
+  recipientWallet String
+  description     String
+  
+  // Source tracking
+  rewardIds       String[] // Array of reward IDs being claimed
+  batchId         String?  // Group related mint requests
+  
+  // Admin review
+  reviewedBy      String?
+  reviewNotes     String?
+  reviewedAt      DateTime?
+  
+  // Blockchain execution
+  mintSignature   String? // Solana transaction signature
+  mintedAt        DateTime?
+  explorerUrl     String?
+  
+  // Security and audit
+  ipAddress       String?
+  userAgent       String?
+  riskScore       Float? // 0-1 risk assessment
+  
+  // Timestamps
+  requestedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("mint_requests")
+}
+
+model RewardAudit {
+  id        String @id @default(uuid())
+  userId    String
+  
+  // Audit details
+  action    String // "rule_created", "reward_processed", "mint_requested", etc.
+  resource  String // "reward", "mint_request", "reward_rule"
+  resourceId String
+  
+  // Change tracking
+  oldValues Json?
+  newValues Json?
+  
+  // Context
+  triggeredBy   String? // User ID or "system"
+  reason        String?
+  metadata      Json?
+  
+  // System info
+  ipAddress     String?
+  userAgent     String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@map("reward_audits")
+}
+
+model SystemMetrics {
+  id        String @id @default(uuid())
+  metricKey String
+  value     Float
+  unit      String?
+  tags      Json? // Additional metadata tags
+  
+  // Timestamps
+  recordedAt DateTime @default(now())
+  
+  @@index([metricKey, recordedAt])
+  @@map("system_metrics")
+}
+
+// Wallet Connection and Verification Models
+
+model WalletVerification {
+  id          String @id @default(uuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Verification details
+  publicKey   String // Solana wallet public key
+  nonce       String // Random challenge nonce
+  signature   String? // User's signature of the nonce
+  message     String // Full message that was signed
+  status      WalletVerificationStatus @default(PENDING)
+  
+  // Security tracking
+  ipAddress   String?
+  userAgent   String?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  verifiedAt  DateTime?
+  expiresAt   DateTime // Verification challenges expire after 15 minutes
+  
+  @@index([userId])
+  @@index([publicKey])
+  @@index([nonce])
+  @@index([expiresAt])
+  @@map("wallet_verifications")
+}
+
+model WalletAudit {
+  id          String @id @default(uuid())
+  userId      String
+  
+  // Audit details
+  action      String // "connection_attempt", "verification_success", "disconnection", etc.
+  publicKey   String
+  oldPublicKey String? // Previous wallet if changing
+  
+  // Context
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json? // Additional context data
+  
+  // Security flags
+  suspicious  Boolean @default(false)
+  reason      String? // Why flagged as suspicious
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([publicKey])
+  @@index([createdAt])
+  @@map("wallet_audits")
 }

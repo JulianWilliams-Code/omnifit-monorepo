@@ -17,7 +17,16 @@
     "devnet:setup": "tsx scripts/devnet-setup.ts",
     "devnet:mint": "tsx scripts/create-mint.ts",
     "devnet:fund": "tsx scripts/fund-account.ts",
-    "devnet:test": "tsx scripts/test-transactions.ts"
+    "devnet:test": "tsx scripts/test-transactions.ts",
+    "mint:create": "tsx scripts/create_mint.ts create",
+    "mint:account": "tsx scripts/create_mint.ts account",
+    "mint:fund": "tsx scripts/create_mint.ts fund",
+    "mint:tokens": "tsx scripts/mint_to_account.ts mint",
+    "mint:process": "tsx scripts/mint_to_account.ts process",
+    "mint:balance": "tsx scripts/mint_to_account.ts balance",
+    "mint:monitor": "tsx scripts/monitor_mint_requests.ts",
+    "mint:report": "tsx scripts/monitor_mint_requests.ts report",
+    "mint:watch": "tsx scripts/monitor_mint_requests.ts watch"
   },
   "dependencies": {
     "@solana/web3.js": "^1.78.8",

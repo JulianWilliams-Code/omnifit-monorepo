@@ -1,6 +1,88 @@
-# OmniFit Monorepo
+# OmniFit - Comprehensive Fitness & Spiritual Wellness Platform
 
-> Faith + Fitness + Token Rewards Platform - A comprehensive wellness ecosystem with blockchain incentives
+OmniFit is a revolutionary platform that integrates physical fitness with spiritual wellness, featuring blockchain-based rewards, AI-powered coaching, and human accountability partnerships.
+
+## 🪙 Reward Engine - Now Live!
+
+The OmniFit Reward Engine is a secure off-chain verification system with queued on-chain mint requests:
+
+### Key Features
+- ⚡ **Real-time Processing** - BullMQ-powered reward calculation with configurable rules
+- 🛡️ **Security First** - Multi-tier approval system with automatic risk assessment
+- 🔍 **Comprehensive Audit** - Complete transaction and change logging for compliance
+- 🤖 **AI Integration** - Smart daily summaries and partner communication tools
+
+### Quick Start Guide
+
+```bash
+# Set up the reward engine
+npm run dev:backend        # Start API server
+npm run dev:ai            # Start AI service
+
+# Create token mint (development)
+cd apps/blockchain
+npm run mint:create "OmniFit Token" "OMNI" 9
+
+# Monitor and process mint requests
+npm run mint:monitor report
+npm run mint:process
+```
+
+See [Reward Engine Security Guide](./docs/REWARD_ENGINE_SECURITY.md) for production deployment.
+
+## 🔐 Wallet Integration
+
+OmniFit includes secure Solana wallet integration for on-chain reward distribution and verification:
+
+### Supported Wallets
+- **Phantom** - Most popular Solana wallet
+- **Solflare** - Feature-rich web and mobile wallet  
+- **Backpack** - Next-generation wallet with xNFT support
+- **Ledger** - Hardware wallet for maximum security
+
+### Security Features
+- **Ed25519 Signature Verification** - Cryptographic proof of wallet ownership
+- **Anti-Replay Protection** - Nonce-based challenges prevent signature reuse
+- **Suspicious Activity Detection** - Automated fraud prevention and audit logging
+- **Privacy First** - No private keys stored, only public addresses
+
+### Quick Setup
+
+```bash
+# Environment configuration (add to apps/frontend/.env.local)
+NEXT_PUBLIC_SOLANA_NETWORK=devnet  # or testnet/mainnet-beta
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com  # optional custom RPC
+
+# The wallet integration is automatically available in the frontend
+# Users can connect via Dashboard header or Settings > Wallet page
+```
+
+### API Endpoints
+
+```typescript
+// Generate verification challenge
+POST /api/wallet/challenge
+{ "publicKey": "base58-encoded-key" }
+
+// Verify signed message and link wallet
+POST /api/wallet/verify  
+{ "publicKey": "...", "message": "...", "signature": "..." }
+
+// Get connection status
+GET /api/wallet/status
+
+// View connection history
+GET /api/wallet/history
+
+// Disconnect wallet
+DELETE /api/wallet/disconnect
+```
+
+### Frontend Components
+
+- **ConnectWallet** - Two-step connection and verification UI
+- **WalletDisplay** - Header component showing connected wallet
+- **WalletSettings** - Full settings page with security info and history
 
 ## 🏗️ Monorepo Structure
 
@@ -72,8 +154,8 @@ pnpm typecheck
 ## 📱 Applications
 
 ### Frontend (`apps/frontend`)
-- **Tech Stack**: Next.js 14 + TypeScript + Tailwind CSS
-- **Features**: Landing page, auth, dashboard, partner portal
+- **Tech Stack**: Next.js 14 + TypeScript + Tailwind CSS + Solana Wallet Adapter
+- **Features**: Landing page, auth, dashboard, partner portal, wallet integration
 - **Local URL**: http://localhost:3000
 - **Phase**: 1
 
@@ -169,6 +251,7 @@ docker build -t omnifit/ai apps/ai
 - ✅ Backend API & database  
 - ✅ Basic user registration
 - ✅ Manual reward tracking
+- ✅ Solana wallet integration
 
 ### Phase 2: AI Integration (Q2 2024)
 - 🔄 AI coaching messages

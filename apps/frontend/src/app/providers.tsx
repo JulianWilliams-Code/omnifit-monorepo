@@ -6,7 +6,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  BackpackWalletAdapter,
+  LedgerWalletAdapter
+} from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { AuthProvider } from '@/lib/auth-context';
 import { Toaster } from '@omnifit/ui';
@@ -24,14 +29,33 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Solana network configuration
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = React.useMemo(() => clusterApiUrl(network), [network]);
+  // Solana network configuration - use environment variable or default to devnet
+  const network = React.useMemo(() => {
+    const envNetwork = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    switch (envNetwork) {
+      case 'mainnet-beta':
+        return WalletAdapterNetwork.Mainnet;
+      case 'testnet':
+        return WalletAdapterNetwork.Testnet;
+      default:
+        return WalletAdapterNetwork.Devnet;
+    }
+  }, []);
+
+  const endpoint = React.useMemo(() => {
+    // Use custom RPC if provided, otherwise use default cluster URL
+    if (process.env.NEXT_PUBLIC_SOLANA_RPC_URL) {
+      return process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+    }
+    return clusterApiUrl(network);
+  }, [network]);
   
   const wallets = React.useMemo(
     () => [
       new PhantomWalletAdapter(),
-      // Add more wallet adapters here as needed
+      new SolflareWalletAdapter(),
+      new BackpackWalletAdapter(),
+      new LedgerWalletAdapter()
     ],
     []
   );

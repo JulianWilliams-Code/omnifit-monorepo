@@ -259,3 +259,98 @@ export type NotificationType = 'REWARD' | 'STREAK' | 'PARTNER' | 'MILESTONE' | '
 export type TransactionType = 'REWARD' | 'CLAIM' | 'TRANSFER' | 'STAKE' | 'UNSTAKE';
 export type TransactionStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCELLED';
 export type AIMessageType = 'DAILY_MOTIVATION' | 'STREAK_ENCOURAGEMENT' | 'MILESTONE_CELEBRATION' | 'PARTNER_RECOMMENDATION';
+
+// Human Accountability System Types
+export type PartnershipStatus = 'REQUESTED' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'PAUSED' | 'ENDED';
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REQUIRES_CLARIFICATION';
+export type PlanType = 'SPIRITUAL' | 'WORKOUT' | 'HYBRID';
+export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED';
+
+export interface PartnershipRequest {
+  id: string;
+  userId: string;
+  partnerId?: string;
+  status: PartnershipStatus;
+  message?: string;
+  allowsEventReview: boolean;
+  allowsPlanCreation: boolean;
+  allowsGoalSetting: boolean;
+  preferredGender?: Gender;
+  preferredAgeRange?: string;
+  preferredExperience?: string;
+  preferredCategories: EventCategory[];
+  partnerResponse?: string;
+  responseAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  acceptedAt?: Date;
+  endedAt?: Date;
+}
+
+export interface Plan {
+  id: string;
+  createdBy: string;
+  type: PlanType;
+  title: string;
+  description?: string;
+  status: PlanStatus;
+  startDate: Date;
+  endDate?: Date;
+  weeklyGoal?: number;
+  activities: any; // JSON structure
+  goals: any; // JSON structure
+  milestones: any; // JSON structure
+  completedActivities: number;
+  totalActivities: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventApproval {
+  id: string;
+  eventId: string;
+  userId: string;
+  partnerId?: string;
+  status: ApprovalStatus;
+  partnerFeedback?: string;
+  partnerRating?: number;
+  clarificationNeeded?: string;
+  aiSummary?: string;
+  approvalMultiplier?: number;
+  submittedAt: Date;
+  reviewedAt?: Date;
+}
+
+export interface DailySummary {
+  id: string;
+  userId: string;
+  date: Date;
+  adherenceBullet: string;
+  highlightsBullet: string;
+  recommendationBullet: string;
+  activitiesCompleted: number;
+  activitiesPlanned: number;
+  totalDuration: number;
+  avgMood?: number;
+  avgEnergy?: number;
+  partnerNotified: boolean;
+  partnerViewed: boolean;
+  partnerViewedAt?: Date;
+  generatedAt: Date;
+  updatedAt: Date;
+}
+
+export interface PartnerNotification {
+  id: string;
+  partnerId: string;
+  type: string;
+  title: string;
+  message: string;
+  data?: any;
+  emailSent: boolean;
+  webhookSent: boolean;
+  deliveredAt?: Date;
+  readAt?: Date;
+  actionTaken?: string;
+  createdAt: Date;
+}

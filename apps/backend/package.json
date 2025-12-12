@@ -47,6 +47,9 @@
     "express-rate-limit": "^7.1.5",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
+    "@solana/web3.js": "^1.78.8",
+    "tweetnacl": "^1.0.3",
+    "bs58": "^5.0.0",
     "@omnifit/shared": "workspace:*",
     "@omnifit/db": "workspace:*"
   },
@@ -60,6 +63,7 @@
     "@types/passport-jwt": "^3.0.13",
     "@types/passport-local": "^1.0.38",
     "@types/bcryptjs": "^2.4.6",
+    "@types/bs58": "^5.0.0",
     "@types/supertest": "^2.0.16",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",

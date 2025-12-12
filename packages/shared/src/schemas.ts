@@ -243,6 +243,127 @@ export const ManualRewardSchema = z.object({
   expiresAt: z.coerce.date().optional(),
 });
 
+// Human Accountability Schemas
+export const CreatePartnershipRequestSchema = z.object({
+  partnerId: IdSchema.optional(), // If requesting specific partner
+  message: z.string().max(500).optional(),
+  allowsEventReview: z.boolean().default(true),
+  allowsPlanCreation: z.boolean().default(true),
+  allowsGoalSetting: z.boolean().default(true),
+  preferredGender: GenderSchema.optional(),
+  preferredAgeRange: z.string().max(20).optional(),
+  preferredExperience: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  preferredCategories: z.array(EventCategorySchema).default([]),
+});
+
+export const RespondToPartnershipSchema = z.object({
+  accept: z.boolean(),
+  response: z.string().max(500).optional(),
+});
+
+export const CreatePlanSchema = z.object({
+  userId: IdSchema, // User the plan is for
+  type: z.enum(['SPIRITUAL', 'WORKOUT', 'HYBRID']),
+  title: z.string().min(1).max(100),
+  description: z.string().max(1000).optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().optional(),
+  weeklyGoal: z.number().min(1).max(21).optional(),
+  activities: z.array(z.object({
+    name: z.string(),
+    type: EventTypeSchema,
+    category: EventCategorySchema,
+    scheduledDays: z.array(z.number().min(0).max(6)), // 0=Sunday, 6=Saturday
+    duration: z.number().min(5).max(480), // minutes
+    intensity: z.number().min(1).max(10).optional(),
+  })),
+  goals: z.array(z.object({
+    description: z.string(),
+    targetValue: z.number().optional(),
+    targetDate: z.coerce.date().optional(),
+    category: EventCategorySchema,
+  })),
+  milestones: z.array(z.object({
+    description: z.string(),
+    targetDate: z.coerce.date(),
+    rewardTokens: z.number().min(0),
+  })),
+});
+
+export const UpdatePlanSchema = CreatePlanSchema.partial().omit({ userId: true });
+
+export const ApproveEventSchema = z.object({
+  approve: z.boolean(),
+  feedback: z.string().max(500).optional(),
+  rating: z.number().min(1).max(5).optional(),
+  clarificationNeeded: z.string().max(500).optional(),
+});
+
+export const GenerateDailySummarySchema = z.object({
+  userId: IdSchema,
+  date: z.coerce.date(),
+  forceRegenerate: z.boolean().default(false),
+});
+
+export const DraftPartnerReplySchema = z.object({
+  summaryId: IdSchema,
+  context: z.string().max(1000).optional(), // Additional context from partner
+});
+
+// Reward Engine Schemas
+export const ClaimRewardsSchema = z.object({
+  rewardIds: z.array(IdSchema).min(1, 'At least one reward must be selected'),
+  recipientWallet: z.string().regex(/^[A-HJ-NP-Za-km-z1-9]{32,44}$/, 'Invalid Solana wallet address'),
+});
+
+export const CreateRewardRuleSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().min(10).max(1000),
+  conditions: z.object({
+    eventType: z.array(z.string()).optional(),
+    category: z.array(z.string()).optional(),
+    minDuration: z.number().min(0).optional(),
+    maxDuration: z.number().min(0).optional(),
+    minIntensity: z.number().min(1).max(10).optional(),
+    maxIntensity: z.number().min(1).max(10).optional(),
+    streakCount: z.number().min(1).optional(),
+    partnerApproved: z.boolean().optional(),
+    timeOfDay: z.enum(['morning', 'afternoon', 'evening']).optional(),
+    dayOfWeek: z.array(z.number().min(0).max(6)).optional()
+  }),
+  baseAmount: z.number().min(1).max(10000),
+  multiplierRules: z.array(z.object({
+    condition: z.string(),
+    multiplier: z.number().min(0.1).max(10),
+    description: z.string()
+  })).optional(),
+  maxDailyAmount: z.number().min(1).optional(),
+  maxUserAmount: z.number().min(1).optional(),
+  validFrom: z.coerce.date().optional(),
+  validTo: z.coerce.date().optional()
+});
+
+export const UpdateRewardRuleSchema = CreateRewardRuleSchema.partial();
+
+export const ApproveMintRequestSchema = z.object({
+  notes: z.string().max(500).optional()
+});
+
+export const RejectMintRequestSchema = z.object({
+  reason: z.string().min(1).max(500)
+});
+
+// Wallet Connection Schemas
+export const GenerateWalletChallengeSchema = z.object({
+  publicKey: z.string().regex(/^[A-HJ-NP-Za-km-z1-9]{32,44}$/, 'Invalid Solana wallet address')
+});
+
+export const VerifyWalletSignatureSchema = z.object({
+  publicKey: z.string().regex(/^[A-HJ-NP-Za-km-z1-9]{32,44}$/, 'Invalid Solana wallet address'),
+  message: z.string().min(1, 'Message is required'),
+  signature: z.string().min(1, 'Signature is required')
+});
+
 // Export all schemas as a collection
 export const schemas = {
   // Base
@@ -298,4 +419,24 @@ export const schemas = {
   AdminCreateUser: AdminCreateUserSchema,
   AdminUpdateUser: AdminUpdateUserSchema,
   ManualReward: ManualRewardSchema,
+  
+  // Human Accountability
+  CreatePartnershipRequest: CreatePartnershipRequestSchema,
+  RespondToPartnership: RespondToPartnershipSchema,
+  CreatePlan: CreatePlanSchema,
+  UpdatePlan: UpdatePlanSchema,
+  ApproveEvent: ApproveEventSchema,
+  GenerateDailySummary: GenerateDailySummarySchema,
+  DraftPartnerReply: DraftPartnerReplySchema,
+  
+  // Reward Engine
+  ClaimRewards: ClaimRewardsSchema,
+  CreateRewardRule: CreateRewardRuleSchema,
+  UpdateRewardRule: UpdateRewardRuleSchema,
+  ApproveMintRequest: ApproveMintRequestSchema,
+  RejectMintRequest: RejectMintRequestSchema,
+  
+  // Wallet Connection
+  GenerateWalletChallenge: GenerateWalletChallengeSchema,
+  VerifyWalletSignature: VerifyWalletSignatureSchema,
 } as const;

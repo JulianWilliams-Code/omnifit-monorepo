@@ -3,9 +3,13 @@
 import { Button } from '@omnifit/ui';
 import { useAuth } from '@/lib/auth-context';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { ConnectWallet } from '@/components/wallet/ConnectWallet';
+import { WalletDisplay } from '@/components/wallet/WalletDisplay';
+import { useWallet } from '@/hooks/useWallet';
 
 export function Header() {
   const { user, logout } = useAuth();
+  const { isLinked } = useWallet();
 
   return (
     <header className="border-b bg-card">
@@ -15,7 +19,12 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <WalletMultiButton className="!bg-primary !text-primary-foreground" />
+          {/* Wallet Connection */}
+          {isLinked ? (
+            <WalletDisplay />
+          ) : (
+            <ConnectWallet compact={true} />
+          )}
           
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
