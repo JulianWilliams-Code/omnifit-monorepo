@@ -1,0 +1,451 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  USER
+  PARTNER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum EventType {
+  WORKOUT
+  MEDITATION
+  PRAYER
+  STUDY
+  SERVICE
+  OTHER
+}
+
+enum EventCategory {
+  FITNESS
+  SPIRITUAL
+  HYBRID
+}
+
+enum MoodLevel {
+  VERY_LOW
+  LOW
+  NEUTRAL
+  GOOD
+  VERY_GOOD
+}
+
+enum EnergyLevel {
+  VERY_LOW
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+enum PartnerType {
+  GYM
+  STUDIO
+  CHURCH
+  NONPROFIT
+  RETAILER
+  SERVICE
+}
+
+enum PartnerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  ACTIVE
+}
+
+enum OfferType {
+  DISCOUNT
+  FREE_TRIAL
+  EXCLUSIVE_ACCESS
+  MERCHANDISE
+  SERVICE
+}
+
+enum RewardType {
+  ACTIVITY
+  STREAK
+  MILESTONE
+  PARTNER_REFERRAL
+  MANUAL
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  CLAIMED
+  EXPIRED
+  REJECTED
+}
+
+enum StreakType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum NotificationType {
+  REWARD
+  STREAK
+  PARTNER
+  MILESTONE
+  SOCIAL
+  SYSTEM
+}
+
+enum TransactionType {
+  REWARD
+  CLAIM
+  TRANSFER
+  STAKE
+  UNSTAKE
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+}
+
+enum AIMessageType {
+  DAILY_MOTIVATION
+  STREAK_ENCOURAGEMENT
+  MILESTONE_CELEBRATION
+  PARTNER_RECOMMENDATION
+}
+
+// Main Models
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  passwordHash  String
+  walletAddress String?  @unique
+  role          UserRole @default(USER)
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLoginAt DateTime?
+  
+  // Relations
+  profile       UserProfile?
+  events        Event[]
+  rewards       Reward[]
+  streaks       Streak[]
+  notifications Notification[]
+  transactions  Transaction[]
+  aiMessages    AIMessage[]
+  
+  @@map("users")
+}
+
+model UserProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  bio           String?
+  dateOfBirth   DateTime?
+  gender        Gender?
+  height        Float?      // cm
+  weight        Float?      // kg
+  activityLevel ActivityLevel @default(MODERATE)
+  timezone      String        @default("UTC")
+  language      String        @default("en")
+  
+  // Goals
+  fitnessGoals   String[] // JSON array
+  spiritualGoals String[] // JSON array
+  
+  // Streak Tracking
+  currentFitnessStreak   Int @default(0)
+  longestFitnessStreak   Int @default(0)
+  currentSpiritualStreak Int @default(0)
+  longestSpiritualStreak Int @default(0)
+  currentCombinedStreak  Int @default(0)
+  longestCombinedStreak  Int @default(0)
+  
+  // Gamification
+  level        Int   @default(1)
+  experience   Int   @default(0)
+  totalTokens  Int   @default(0)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("user_profiles")
+}
+
+model Event {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Event Details
+  type        EventType
+  category    EventCategory
+  title       String
+  description String?
+  duration    Int?          // minutes
+  intensity   Int?          // 1-10 scale
+  mood        MoodLevel?
+  energy      EnergyLevel?
+  location    String?
+  notes       String?
+  tags        String[]      // JSON array
+  
+  // Timestamps
+  completedAt DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Fitness specific
+  caloriesBurned Int?
+  exercises      Exercise[]
+  
+  // Spiritual specific
+  technique   String?
+  reflection  String?
+  gratitude   String[] // JSON array
+  insights    String[] // JSON array
+  
+  // Relations
+  rewards     Reward[]
+  
+  @@map("events")
+}
+
+model Exercise {
+  id       String @id @default(uuid())
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  name     String
+  sets     Int?
+  reps     Int?
+  weight   Float? // kg
+  distance Float? // meters
+  duration Int?   // seconds
+  
+  @@map("exercises")
+}
+
+model Partner {
+  id          String        @id @default(uuid())
+  name        String
+  email       String        @unique
+  type        PartnerType
+  status      PartnerStatus @default(PENDING)
+  description String
+  logo        String?
+  website     String?
+  contactPerson String
+  
+  // Partnership Details
+  offerType          OfferType
+  offerDescription   String
+  tokenRequirement   Int
+  maxRedemptions     Int?
+  validUntil         DateTime?
+  
+  // Admin fields
+  approvedBy String?
+  approvedAt DateTime?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  rewards   Reward[]
+  
+  @@map("partners")
+}
+
+model Reward {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String?
+  event     Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  partnerId String?
+  partner   Partner?     @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  
+  // Reward Details
+  type         RewardType
+  amount       Int        // token amount
+  reason       String
+  status       RewardStatus @default(PENDING)
+  
+  // Metadata
+  sourceType   String     // 'event' | 'streak' | 'milestone' | 'partner' | 'manual'
+  multiplier   Float?
+  bonusReason  String?
+  
+  // Timestamps
+  earnedAt  DateTime  @default(now())
+  claimedAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@map("rewards")
+}
+
+model Streak {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type           StreakType
+  category       EventCategory
+  currentCount   Int         @default(0)
+  longestCount   Int         @default(0)
+  lastActiveDate DateTime
+  startDate      DateTime    @default(now())
+  endDate        DateTime?
+  isActive       Boolean     @default(true)
+  
+  // Milestone tracking (JSON)
+  milestones     Json        @default("[]") // Array of milestone objects
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("streaks")
+}
+
+model Notification {
+  id      String           @id @default(uuid())
+  userId  String
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type    NotificationType
+  title   String
+  message String
+  data    Json?            // Additional data
+  
+  // Timestamps
+  readAt    DateTime?
+  createdAt DateTime        @default(now())
+  
+  @@map("notifications")
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        TransactionType
+  amount      Int
+  fromAddress String?
+  toAddress   String?
+  signature   String?           // Blockchain transaction signature
+  status      TransactionStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt   DateTime          @default(now())
+  confirmedAt DateTime?
+  
+  @@map("transactions")
+}
+
+model AIMessage {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      AIMessageType
+  content   String
+  context   Json?         // Additional context for message generation
+  
+  // Timestamps
+  generatedAt DateTime     @default(now())
+  sentAt      DateTime?
+  readAt      DateTime?
+  
+  @@map("ai_messages")
+}
+
+model AIPromptTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  category  String
+  template  String
+  variables String[] // JSON array of variable names
+  isActive  Boolean  @default(true)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("ai_prompt_templates")
+}
+
+// Additional utility models for system management
+
+model SystemConfig {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("system_config")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  // null for system actions
+  action    String
+  resource  String
+  resourceId String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@map("audit_logs")
+}

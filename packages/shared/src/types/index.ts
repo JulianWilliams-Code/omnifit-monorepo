@@ -1,0 +1,261 @@
+/**
+ * OmniFit Shared Types
+ * Common TypeScript interfaces and types used across all applications
+ */
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  walletAddress?: string;
+  role: UserRole;
+  isActive: boolean;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  profile?: UserProfile;
+}
+
+export interface UserProfile {
+  bio?: string;
+  dateOfBirth?: Date;
+  gender?: Gender;
+  height?: number; // cm
+  weight?: number; // kg
+  activityLevel: ActivityLevel;
+  timezone: string;
+  language: string;
+  // Faith & Fitness Goals
+  fitnessGoals: string[];
+  spiritualGoals: string[];
+  // Progress Tracking
+  currentFitnessStreak: number;
+  longestFitnessStreak: number;
+  currentSpiritualStreak: number;
+  longestSpiritualStreak: number;
+  currentCombinedStreak: number;
+  longestCombinedStreak: number;
+  // Gamification
+  level: number;
+  experience: number;
+  totalTokens: number;
+}
+
+export interface Event {
+  id: string;
+  userId: string;
+  type: EventType;
+  category: EventCategory;
+  title: string;
+  description?: string;
+  duration?: number; // minutes
+  intensity?: number; // 1-10 scale
+  mood?: MoodLevel;
+  energy?: EnergyLevel;
+  location?: string;
+  notes?: string;
+  tags: string[];
+  completedAt: Date;
+  createdAt: Date;
+  // Fitness specific
+  caloriesBurned?: number;
+  exercises?: Exercise[];
+  // Spiritual specific
+  technique?: string;
+  reflection?: string;
+  gratitude?: string[];
+  insights?: string[];
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets?: number;
+  reps?: number;
+  weight?: number; // kg
+  distance?: number; // meters
+  duration?: number; // seconds
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  email: string;
+  type: PartnerType;
+  status: PartnerStatus;
+  description: string;
+  logo?: string;
+  website?: string;
+  contactPerson: string;
+  // Partnership Details
+  offerType: OfferType;
+  offerDescription: string;
+  tokenRequirement: number; // tokens needed to claim
+  maxRedemptions?: number;
+  validUntil?: Date;
+  // Admin fields
+  approvedBy?: string;
+  approvedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Reward {
+  id: string;
+  userId: string;
+  eventId?: string;
+  partnerId?: string;
+  type: RewardType;
+  amount: number; // token amount
+  reason: string;
+  status: RewardStatus;
+  // Metadata
+  sourceType: 'event' | 'streak' | 'milestone' | 'partner' | 'manual';
+  multiplier?: number;
+  bonusReason?: string;
+  // Timestamps
+  earnedAt: Date;
+  claimedAt?: Date;
+  expiresAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Streak {
+  id: string;
+  userId: string;
+  type: StreakType;
+  category: EventCategory;
+  currentCount: number;
+  longestCount: number;
+  lastActiveDate: Date;
+  startDate: Date;
+  endDate?: Date;
+  isActive: boolean;
+  // Milestone tracking
+  milestones: StreakMilestone[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StreakMilestone {
+  days: number;
+  bonus: number; // token bonus
+  achieved: boolean;
+  achievedAt?: Date;
+}
+
+// API Response Types
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+  message?: string;
+  timestamp: string;
+}
+
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+// Authentication Types
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
+  walletAddress?: string;
+}
+
+// Notification Types
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: Record<string, any>;
+  readAt?: Date;
+  createdAt: Date;
+}
+
+// Blockchain Types
+export interface TokenBalance {
+  address: string;
+  balance: number;
+  lastUpdated: Date;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  type: TransactionType;
+  amount: number;
+  fromAddress?: string;
+  toAddress?: string;
+  signature?: string;
+  status: TransactionStatus;
+  createdAt: Date;
+  confirmedAt?: Date;
+}
+
+// AI Types
+export interface AIMessage {
+  id: string;
+  userId: string;
+  type: AIMessageType;
+  content: string;
+  context?: Record<string, any>;
+  generatedAt: Date;
+  sentAt?: Date;
+  readAt?: Date;
+}
+
+export interface AIPromptTemplate {
+  id: string;
+  name: string;
+  category: string;
+  template: string;
+  variables: string[];
+  isActive: boolean;
+}
+
+// Enums (will be defined in separate enum file)
+export type UserRole = 'USER' | 'PARTNER' | 'ADMIN' | 'SUPER_ADMIN';
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+export type ActivityLevel = 'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'ACTIVE' | 'VERY_ACTIVE';
+export type EventType = 'WORKOUT' | 'MEDITATION' | 'PRAYER' | 'STUDY' | 'SERVICE' | 'OTHER';
+export type EventCategory = 'FITNESS' | 'SPIRITUAL' | 'HYBRID';
+export type MoodLevel = 'VERY_LOW' | 'LOW' | 'NEUTRAL' | 'GOOD' | 'VERY_GOOD';
+export type EnergyLevel = 'VERY_LOW' | 'LOW' | 'MODERATE' | 'HIGH' | 'VERY_HIGH';
+export type PartnerType = 'GYM' | 'STUDIO' | 'CHURCH' | 'NONPROFIT' | 'RETAILER' | 'SERVICE';
+export type PartnerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'ACTIVE';
+export type OfferType = 'DISCOUNT' | 'FREE_TRIAL' | 'EXCLUSIVE_ACCESS' | 'MERCHANDISE' | 'SERVICE';
+export type RewardType = 'ACTIVITY' | 'STREAK' | 'MILESTONE' | 'PARTNER_REFERRAL' | 'MANUAL';
+export type RewardStatus = 'PENDING' | 'APPROVED' | 'CLAIMED' | 'EXPIRED' | 'REJECTED';
+export type StreakType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type NotificationType = 'REWARD' | 'STREAK' | 'PARTNER' | 'MILESTONE' | 'SOCIAL' | 'SYSTEM';
+export type TransactionType = 'REWARD' | 'CLAIM' | 'TRANSFER' | 'STAKE' | 'UNSTAKE';
+export type TransactionStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCELLED';
+export type AIMessageType = 'DAILY_MOTIVATION' | 'STREAK_ENCOURAGEMENT' | 'MILESTONE_CELEBRATION' | 'PARTNER_RECOMMENDATION';

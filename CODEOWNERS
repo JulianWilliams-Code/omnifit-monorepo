@@ -1,0 +1,40 @@
+# Global ownership
+* @omnifit/core-team
+
+# Frontend application
+/apps/frontend/ @omnifit/frontend-team @omnifit/core-team
+
+# Backend application  
+/apps/backend/ @omnifit/backend-team @omnifit/core-team
+
+# AI service
+/apps/ai/ @omnifit/ai-team @omnifit/backend-team
+
+# Blockchain service
+/apps/blockchain/ @omnifit/blockchain-team @omnifit/backend-team
+
+# Shared packages
+/packages/shared/ @omnifit/core-team
+/packages/ui/ @omnifit/frontend-team @omnifit/core-team
+/packages/db/ @omnifit/backend-team @omnifit/core-team
+
+# Infrastructure and DevOps
+/infra/ @omnifit/devops-team @omnifit/core-team
+/.github/ @omnifit/devops-team @omnifit/core-team
+/docker-compose.yml @omnifit/devops-team
+/*Dockerfile @omnifit/devops-team
+
+# Configuration files
+/package.json @omnifit/core-team
+/pnpm-workspace.yaml @omnifit/core-team
+/turbo.json @omnifit/core-team
+/tsconfig.json @omnifit/core-team
+
+# Documentation
+/README.md @omnifit/core-team
+/ROADMAP.md @omnifit/core-team
+/docs/ @omnifit/core-team
+
+# Security sensitive files
+/.env.example @omnifit/security-team @omnifit/core-team
+/SECURITY.md @omnifit/security-team

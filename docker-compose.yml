@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: omnifit
+      POSTGRES_PASSWORD: omnifit_dev
+      POSTGRES_DB: omnifit_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omnifit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and job queues
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://omnifit:omnifit_dev@postgres:5432/omnifit_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret-key-here
+      - JWT_REFRESH_SECRET=your-refresh-secret-key-here
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Frontend Next.js App
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_SOLANA_CLUSTER=devnet
+    depends_on:
+      - backend
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # AI Service
+  ai-service:
+    build:
+      context: .
+      dockerfile: ./apps/ai/Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://omnifit:omnifit_dev@postgres:5432/omnifit_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./apps/ai:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Blockchain Service (for cron jobs and background tasks)
+  blockchain-worker:
+    build:
+      context: .
+      dockerfile: ./apps/blockchain/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://omnifit:omnifit_dev@postgres:5432/omnifit_db
+      - SOLANA_CLUSTER=devnet
+      - MINT_AUTHORITY_SECRET_KEY=${MINT_AUTHORITY_SECRET_KEY}
+      - TOKEN_MINT_ADDRESS=${TOKEN_MINT_ADDRESS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./apps/blockchain:/app
+      - /app/node_modules
+    command: node dist/workers/reward-processor.js
+
+  # Prisma Studio (Database GUI)
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: ./infra/prisma-studio/Dockerfile
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://omnifit:omnifit_dev@postgres:5432/omnifit_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./packages/db:/app
+    command: npx prisma studio --port 5555 --hostname 0.0.0.0
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: omnifit-network
